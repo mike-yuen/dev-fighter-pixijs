@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="js/pixi.min.js"></script>
+    <script>
+        let app;
+        window.onload = function () {
+            app = new PIXI.Application({ width: 800, height: 600, backgroundColor: 0xAAAAAA })
+            document.body.appendChild(app.view)
+
+            // player object
+            player = new PIXI.Sprite.from("images/player.png")
+            player.anchor.set(0.5)
+            player.x = app.view.width / 2
+            player.y = app.view.height / 2
+            app.stage.addChild(player)
+
+            // keyboard event handler
+            window.addEventListener("keydown", keysDown)
+            window.addEventListener("keyup", keysUp)
+
+            function keysDown(e) {
+                
+            }
+
+            function keysUp(e) {
+                
+            }
+        }
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
