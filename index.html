@@ -10,12 +10,18 @@
     <script>
         let app
         let player
+        let enermy
+        let slingshotBoy
+        let slingshotBoySheet = {}
+        let speed = 10
         let keys = {}
         let keysDiv
+        let bullets = []
+        let bulletSpeed = 10
 
         window.onload = function () {
             app = new PIXI.Application({ width: 800, height: 600, backgroundColor: 0xAAAAAA })
-            document.body.appendChild(app.view)
+            // document.body.appendChild(app.view)
 
             // preload assets
             app.loader.baseUrl = "images";
@@ -31,6 +37,7 @@
                 .add("sprite09", "bloat09.png")
                 .add("sprite10", "bloat10.png")
                 .add("player", "player.png")
+                .add("slingshotBoy", "slingshot-boy.png")
 
             app.loader.onProgress.add(showProgress)
             app.loader.onComplete.add(doneLoading)
@@ -38,17 +45,19 @@
             app.loader.load()
 
             // player object
-            // player = new PIXI.Sprite.from("images/player.png")           
+            // player = new PIXI.Sprite.from("images/player.png")
 
             // mouse interactions
+            document.querySelector("#gameSection").appendChild(app.view)
             app.stage.interactive = true
-            app.stage.on("pointermove", movePlayer)
+
+            // app.stage.on("pointerdown", fireBullet)
+            // app.stage.on("pointermove", movePlayer)
 
             // keyboard event handler
             window.addEventListener("keydown", keysDown)
             window.addEventListener("keyup", keysUp)
 
-            app.ticker.add(gameLoop)
             keysDiv = document.querySelector("#keys")
         }
 
@@ -59,15 +68,82 @@
         function doneLoading(e) {
             console.log("DONE LOADING!")
 
-            player = PIXI.Sprite.from(app.loader.resources.player.texture)
-            player.anchor.set(0.5)
-            player.x = app.view.width / 2
-            player.y = app.view.height / 2
-            app.stage.addChild(player)
+            // player = PIXI.Sprite.from(app.loader.resources.player.texture)
+            // player.anchor.set(0.5)
+            // player.x = 16
+            // player.y = app.view.height / 2
+            // app.stage.addChild(player)
+
+            // enermy = PIXI.Sprite.from(app.loader.resources.player.texture)
+            // enermy.anchor.set(0.5)
+            // enermy.x = app.view.width - 16
+            // enermy.y = app.view.height / 2
+            // app.stage.addChild(enermy)
+
+            createSlingshotSheet()
+            createSlingshotBoy()
+            app.ticker.add(gameLoop)
+        }
+
+        function createSlingshotSheet() {
+            let ssheet = PIXI.BaseTexture.from(app.loader.resources.slingshotBoy.url)
+
+            slingshotBoySheet['idle'] = [
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(0, 1, 33, 35))
+            ]
+            slingshotBoySheet['walk'] = [
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(5, 161, 33, 35)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(59, 160, 31, 36)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(104, 161, 29, 35)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(159, 160, 31, 36)),
+            ]
+            slingshotBoySheet['shoot'] = [
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(0, 56, 33, 35)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(56, 56, 33, 35)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(103, 56, 44, 35)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(160, 160, 36, 36)),
+            ]
+            slingshotBoySheet['jump'] = [
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(2, 210, 33, 36)),
+                new PIXI.Texture(ssheet, new PIXI.Rectangle(0, 1, 33, 35))
+            ]
+        }
+
+        function createSlingshotBoy() {
+            slingshotBoy = new PIXI.AnimatedSprite(slingshotBoySheet.idle);
+            slingshotBoy.anchor.set(0.5)
+            slingshotBoy.animationSpeed = .25
+            slingshotBoy.loop = false
+            slingshotBoy.x = app.view.width / 2
+            slingshotBoy.y = app.view.height / 2
+            app.stage.addChild(slingshotBoy)
+            slingshotBoy.play()
         }
 
         function reportError(e) {
             console.error("ERROR: " + e.message)
+        }
+
+        function fireBullet(e) {
+            console.log("FIRE!")
+
+            // const bullet = createBullet();
+            // bullets.push(bullet);
+            // if (!slingshotBoy.playing) {
+            slingshotBoy.textures = slingshotBoySheet.shoot
+            slingshotBoy.play()
+            // }
+        }
+
+        function createBullet() {
+            let bullet = new PIXI.Sprite.from("images/bullet.png")
+            bullet.anchor.set(0.5)
+            bullet.x = player.x
+            bullet.y = player.y
+            bullet.speed = bulletSpeed
+            app.stage.addChild(bullet)
+
+            return bullet
         }
 
         function movePlayer(e) {
@@ -85,31 +161,94 @@
             keys[e.keyCode] = false
         }
 
+        function updateBullets(delta) {
+            for (bullet of bullets) {
+                bullet.position.y -= bullet.speed
+                if (bullet.position.y < 0) {
+                    bullet.dead = true
+                }
+            }
+            for (let i = 0; i < bullets.length; i++) {
+                if (bullets[i].dead) {
+                    app.stage.removeChild(bullets[i])
+                    bullets.splice(i, 1)
+                }
+            }
+        }
+
         function gameLoop() {
             keysDiv.innerHTML = JSON.stringify(keys);
+            document.querySelector("#gameSection").addEventListener("pointerdown", fireBullet)
 
             // W
             if (keys["87"]) {
-                player.y -= 5
+                // player.y -= 5
+                slingshotBoy.textures = slingshotBoySheet.jump
+                slingshotBoy.play()
+                slingshotBoy.y -= 2
+                setTimeout(() => {
+                    slingshotBoy.y += 2
+                }, 150)
+                // if (rectsIntersect(player, enermy)) {
+                //     player.y += 5
+                // }
             }
             // A
             if (keys["65"]) {
-                player.x -= 5
+                // player.x -= 5
+                if (!slingshotBoy.playing) {
+                    slingshotBoy.textures = slingshotBoySheet.walk
+                    slingshotBoy.play()
+                }
+                slingshotBoy.x -= 2
+                // if (rectsIntersect(player, enermy)) {
+                //     player.x += 5
+                // }
             }
             // S
             if (keys["83"]) {
-                player.y += 5
+                // player.y += 5
+                // if (rectsIntersect(player, enermy)) {
+                //     player.y -= 5
+                // }
             }
             // D
             if (keys["68"]) {
-                player.x += 5
+                // player.x += 5
+                if (!slingshotBoy.playing) {
+                    slingshotBoy.textures = slingshotBoySheet.walk
+                    slingshotBoy.play()
+                }
+                slingshotBoy.x += 2
+                // if (rectsIntersect(player, enermy)) {
+                //     player.x -= 5
+                // }
             }
+
+            updateBullets()
+
+            // player.x += speed
+            // enermy.x -= speed
+            // if (rectsIntersect(player, enermy)) {
+            //     speed = 0
+            // }
+        }
+
+        function rectsIntersect(a, b) {
+            let aBox = a.getBounds()
+            let bBox = b.getBounds()
+
+            return aBox.x + aBox.width > bBox.x &&
+                aBox.x < bBox.x + bBox.width &&
+                aBox.y + aBox.height > bBox.y &&
+                aBox.y < bBox.y + bBox.height
         }
     </script>
 </head>
 
 <body>
     <div id="keys"></div>
+    <div id="gameSection"></div>
 </body>
 
 </html>
