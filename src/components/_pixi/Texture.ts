@@ -3,19 +3,16 @@ import IWrapper from '@/components/_pixi/IWrapper'
 import * as WrapperType from '@/components/_pixi/IWrapper'
 import gsap from 'gsap'
 
-export default class Sprite implements IWrapper {
+export default class Texture implements IWrapper {
   protected _container: PIXI.Container
-  protected _sprite: PIXI.Sprite
 
   /**
-   * @param targetsheet spritesheet's location
-   * @param target target picture
+   * @param targetPath target picture
    */
-  constructor(targetsheet: string, target: string) {
-    let id: any = PIXI.Loader.shared.resources[targetsheet].textures
-    this._sprite = new PIXI.Sprite(id[`${target}.png`])
+  constructor(targetPath: string) {
+    let sprite = new PIXI.Sprite(PIXI.utils.TextureCache[targetPath])
     this._container = new PIXI.Container()
-    this._container.addChild(this._sprite)
+    this._container.addChild(sprite)
   }
 
   public setPosition(
@@ -98,14 +95,12 @@ export default class Sprite implements IWrapper {
     this._container.on(event, listener)
   }
 
-  public onClick(listener: any) {
-    this._container.on('click', listener)
-    this._container.on('tap', listener)
+  public onClick(listener: Function): void {
+    throw new Error('Method not implemented.')
   }
 
-  public onHover(listener: any) {
-    this._container.on('mouseover', listener)
-    this._container.on('pointerover', listener)
+  public onHover(listener: Function): void {
+    throw new Error('Method not implemented.')
   }
 
   get x(): number {
